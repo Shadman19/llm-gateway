@@ -1,10 +1,10 @@
 """Fixtures. The backend is mocked so CI runs without a GPU."""
+
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app import backends, cache as cache_module
 from app.main import app
 
 

@@ -3,6 +3,7 @@
 Both backends speak the OpenAI-compatible chat completions API, so vLLM and a
 hosted provider sit behind the same interface. Swapping is a config change.
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol
@@ -20,8 +21,7 @@ class Backend(Protocol):
     name: str
     model: str
 
-    async def chat(self, messages: list[dict[str, str]], max_tokens: int) -> dict[str, Any]:
-        ...
+    async def chat(self, messages: list[dict[str, str]], max_tokens: int) -> dict[str, Any]: ...
 
 
 class OpenAICompatibleBackend:

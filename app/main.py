@@ -1,4 +1,5 @@
 """FastAPI gateway: routing, caching, health, and failure handling."""
+
 from __future__ import annotations
 
 import time

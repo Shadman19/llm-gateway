@@ -1,4 +1,5 @@
 """Gateway tests: routing, caching, validation, failure handling."""
+
 from __future__ import annotations
 
 import pytest
@@ -12,6 +13,7 @@ BODY = {"messages": [{"role": "user", "content": "hello"}], "max_tokens": 32}
 
 # --- health -----------------------------------------------------------------
 
+
 def test_health_reports_backend(client, fake_backend):
     resp = client.get("/health")
     assert resp.status_code == 200
@@ -22,6 +24,7 @@ def test_health_reports_backend(client, fake_backend):
 
 
 # --- routing ----------------------------------------------------------------
+
 
 def test_chat_returns_backend_content(client, fake_backend):
     fake_backend.response_text = "routed"
@@ -41,6 +44,7 @@ def test_backend_selection_is_config_driven(monkeypatch):
 
 
 # --- caching ----------------------------------------------------------------
+
 
 def test_cache_miss_then_hit(client, fake_backend):
     first = client.post("/v1/chat", json=BODY).json()
@@ -67,6 +71,7 @@ def test_cache_key_is_stable_and_distinguishing():
 
 # --- validation -------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -82,6 +87,7 @@ def test_invalid_requests_rejected(client, payload):
 
 
 # --- failure handling -------------------------------------------------------
+
 
 def test_backend_failure_returns_503(client, fake_backend):
     fake_backend.raise_error = BackendError("backend down")

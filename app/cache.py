@@ -1,4 +1,5 @@
 """Redis response cache. Degrades to a no-op if Redis is unavailable."""
+
 from __future__ import annotations
 
 import hashlib
