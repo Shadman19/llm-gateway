@@ -1,142 +1,103 @@
-# START HERE
+# Start here
 
-Follow these in order. Stop at any step that fails and report the error.
+## 1. Install a reproducible local environment
 
----
-
-## Step 1 — Open Terminal in this folder
-
-Unzip this file, then open the Terminal app and type `cd ` (with a space),
-then drag the `llm-gateway` folder onto the Terminal window and press Enter.
-
-Check you are in the right place:
+Use Python 3.12. The pinned CPU reference requirements were checked on Linux.
+They include an embedded Redis executable; no model download, GPU or paid API is
+needed for the reference experiment.
 
 ```bash
-ls
-```
-
-You should see: `app`, `tests`, `benchmarks`, `Dockerfile`, `README.md`, and others.
-
----
-
-## Step 2 — Run the tests
-
-```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
-pytest
+pip install -r requirements-benchmark.txt
+python -m pytest
 ```
 
-**Expected result:** `14 passed`
+The tests exercise routing, backend contracts, cache isolation, dependency
+outages, deadlines and benchmark validity. Their scope is recorded in the test
+names and coverage output.
 
-If you see 14 passed, the code works. Nothing is broken.
-
----
-
-## Step 3 — Put it on GitHub
-
-The repository must be named exactly `llm-gateway`, because the CI badge in
-the README points to that name.
+## 2. Run the CPU reference experiment
 
 ```bash
-git init
-git add -A
-git commit -m "LLM serving gateway with tests and CI"
+python -m benchmarks.reference_stack \
+  --output-dir benchmarks/runs/my-cpu-reference
 ```
 
-Then create an empty repo named `llm-gateway` at github.com/new
-(public, do not add a README), and run the two commands GitHub shows you.
+The driver creates an isolated Redis process, a deterministic HTTP fixture and
+the gateway. It measures the same fixed workload through four paths, at
+concurrency 1/4/8/16 with three repetitions. It then runs controlled failure
+checks, writes raw records/metadata and stops the services. Choose a new output
+directory for each experiment; prior artifacts are preserved.
 
-After pushing, open the **Actions** tab on GitHub. A workflow will run.
-Wait for the green checkmark.
-
-**At this point you already have a real artifact:** a tested, CI-verified repo.
-
----
-
-## Step 4 — Rent a GPU (about 3 hours, roughly $2)
-
-Go to runpod.io or vast.ai. Choose an A10 or A6000 GPU pod with a PyTorch image.
-
-On the GPU machine:
+A smaller integration check is:
 
 ```bash
-pip install vllm
-vllm serve Qwen/Qwen2.5-1.5B-Instruct --host 0.0.0.0 --port 8001
+python -m benchmarks.reference_stack \
+  --output-dir /tmp/gateway-reference-smoke \
+  --requests 4 --concurrency 1,4 --replicates 1
 ```
 
-Wait until it prints that the server is running. Copy the pod's public IP.
+Read `completion.json`, `aggregate.json`, `fault_smoke.json` and the individual
+summary/JSONL files. Verify each run's validity, failures and sample counts.
+The fixture is a model-shaped deterministic HTTP service. Its timings support
+middleware and harness conclusions only.
 
----
+## 3. Connect an existing real model server
 
-## Step 5 — Connect your gateway to the model
-
-Back on your own Mac, in the llm-gateway folder:
+Use existing authorized hardware or an approved endpoint. Keep a model server
+on a private network or an appropriate tunnel. A local vLLM example is:
 
 ```bash
-export VLLM_URL=http://PASTE_POD_IP_HERE:8001/v1
-docker compose up --build
+vllm serve Qwen/Qwen2.5-1.5B-Instruct --host 127.0.0.1 --port 8001
 ```
 
-In a second Terminal window:
+With a separately running local Redis, start the gateway on the same machine:
 
 ```bash
-curl localhost:8000/health
+export VLLM_URL=http://127.0.0.1:8001/v1
+export VLLM_MODEL=Qwen/Qwen2.5-1.5B-Instruct
+export REDIS_URL=redis://127.0.0.1:6379/0
+export MODEL_REVISION=the-actual-model-revision
+export INFERENCE_DTYPE=the-actual-dtype
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-You want to see `"backend_reachable": true`.
+These labels must describe the actual deployment. `/health` is process liveness;
+check `/ready` for the configured model's readiness. Docker Compose requires a
+private model endpoint reachable from its container network; a host loopback
+address inside a container refers to that container.
 
-Then send a real request:
+## 4. Measure a real backend with matched inputs
+
+Run each path independently with the same prompt JSONL, concurrency and
+sampling settings. Use a fresh run ID and output prefix each time. For example:
 
 ```bash
-curl -s localhost:8000/v1/chat \
-  -H 'content-type: application/json' \
-  -d '{"messages":[{"role":"user","content":"Explain KV caching in two sentences."}],"max_tokens":128}'
+python -m benchmarks.serving_benchmark \
+  --url http://127.0.0.1:8001/v1/chat/completions \
+  --mode direct-json --model Qwen/Qwen2.5-1.5B-Instruct \
+  --prompts benchmarks/fixtures/prompts.jsonl \
+  --requests 200 --concurrency 8 --run-id model-direct-r1 \
+  --output-prefix benchmarks/runs/model-direct-r1
+
+python -m benchmarks.serving_benchmark \
+  --url http://127.0.0.1:8000/v1/chat \
+  --mode gateway-bypass --model Qwen/Qwen2.5-1.5B-Instruct \
+  --prompts benchmarks/fixtures/prompts.jsonl \
+  --requests 200 --concurrency 8 --run-id model-bypass-r1 \
+  --output-prefix benchmarks/runs/model-bypass-r1
 ```
 
----
+The bundled prompts are harness fixtures. Use a documented, task-appropriate
+corpus for model capability or quality claims. Consult the
+[protocol](benchmarks/PROTOCOL.md) before adding cold/warm response-cache,
+streaming or precision comparisons. Non-streaming gateway TTFT remains unknown.
 
-## Step 6 — Measure
+## 5. Write only supported conclusions
 
-On the GPU machine:
+Record the actual hardware, model revision, precision, server versions,
+configuration, client placement, raw request records and repeated-run results.
+Keep real-model results distinct from the CPU reference stack. A speed or
+quality claim needs its own completed experiment; placeholders are not results.
 
-```bash
-vllm bench serve \
-  --model Qwen/Qwen2.5-1.5B-Instruct \
-  --base-url http://localhost:8001 \
-  --dataset-name random --num-prompts 200 \
-  --random-input-len 256 --random-output-len 128 \
-  --max-concurrency 16
-```
-
-Run it again with `--max-concurrency 1`, `8`, and `32`.
-
-On your Mac:
-
-```bash
-locust -f benchmarks/locustfile.py --host http://localhost:8000 \
-       --users 10 --spawn-rate 2 --run-time 2m --headless
-```
-
-Run it again with `--users 1` and `--users 50`.
-
----
-
-## Step 7 — Fill in the numbers
-
-Open `benchmarks/RESULTS.md`. Replace every `TBD` with a number you actually
-measured. Fill the environment table at the top first (GPU model, memory,
-vLLM version).
-
-Copy the headline numbers into the table near the top of `README.md`.
-
-Commit and push:
-
-```bash
-git add -A
-git commit -m "Add measured benchmark results"
-git push
-```
-
-**Done.** Never write a number you did not measure.

@@ -9,7 +9,6 @@ Run the model server and gateway first, then:
 Three request classes are tagged separately so warm-cache and cold-cache
 latency can be reported as distinct numbers rather than blended into one mean.
 """
-import random
 import uuid
 
 from locust import HttpUser, between, task
@@ -55,3 +54,4 @@ class GatewayUser(HttpUser):
     @task(1)
     def health(self):
         self.client.get("/health", name="GET /health")
+

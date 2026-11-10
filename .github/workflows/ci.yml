@@ -12,16 +12,27 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-benchmark.txt
       - name: Lint
-        run: ruff check app tests
+        run: ruff check app tests benchmarks --exclude benchmarks/runs
       - name: Format check
-        run: ruff format --check app tests
+        run: ruff format --check app tests benchmarks/serving_benchmark.py benchmarks/reference_stack.py benchmarks/generate_report.py
       - name: Run tests with coverage
         run: pytest --cov=app --cov-report=xml --cov-report=term-missing
+      - name: CPU reference-stack integration check
+        run: >-
+          python -m benchmarks.reference_stack
+          --output-dir "$RUNNER_TEMP/gateway-reference"
+          --requests 4 --concurrency 1,4 --replicates 1
+      - name: Upload reference-stack evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-reference-evidence
+          path: ${{ runner.temp }}/gateway-reference
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
@@ -47,3 +58,4 @@ jobs:
             sleep 2
           done
           echo "container failed to become healthy"; docker logs gw; exit 1
+

@@ -1,21 +1,57 @@
-"""Redis response cache. Degrades to a no-op if Redis is unavailable."""
+"""Best-effort Redis cache with isolated keys and bounded dependency I/O."""
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
+import logging
 from typing import Any
 
 import redis.asyncio as redis
+from redis.exceptions import RedisError
 
 from .config import settings
 
+logger = logging.getLogger(__name__)
 
-def cache_key(model: str, messages: list[dict[str, str]], max_tokens: int) -> str:
+
+def cache_key(
+    model: str,
+    messages: list[dict[str, str]],
+    max_tokens: int,
+    *,
+    backend_name: str,
+    base_url: str,
+    model_revision: str = "unspecified",
+    inference_dtype: str = "unspecified",
+    temperature: float = 0.0,
+    seed: int | None = None,
+    namespace: str = "",
+) -> str:
     payload = json.dumps(
-        {"model": model, "messages": messages, "max_tokens": max_tokens}, sort_keys=True
+        {
+            "schema": 2,
+            "backend": backend_name,
+            "base_url": base_url.rstrip("/"),
+            "model": model,
+            "model_revision": model_revision,
+            "inference_dtype": inference_dtype,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": float(temperature),
+            "seed": seed,
+            "namespace": namespace,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
     )
-    return "llmcache:" + hashlib.sha256(payload.encode()).hexdigest()
+    return "llmcache:v2:" + hashlib.sha256(payload.encode()).hexdigest()
+
+
+def valid_cache_value(value: Any) -> bool:
+    return isinstance(value, dict) and isinstance(value.get("content"), str)
 
 
 class ResponseCache:
@@ -23,33 +59,45 @@ class ResponseCache:
         self._url = url or settings.redis_url
         self._client: redis.Redis | None = None
 
-    async def client(self) -> redis.Redis | None:
+    async def client(self) -> redis.Redis:
         if self._client is None:
-            try:
-                self._client = redis.from_url(self._url, decode_responses=True)
-                await self._client.ping()
-            except Exception:
-                self._client = None
+            self._client = redis.from_url(
+                self._url,
+                decode_responses=True,
+                socket_connect_timeout=settings.cache_io_timeout_seconds,
+                socket_timeout=settings.cache_io_timeout_seconds,
+            )
         return self._client
 
     async def get(self, key: str) -> dict[str, Any] | None:
-        client = await self.client()
-        if client is None:
-            return None
         try:
-            raw = await client.get(key)
-        except Exception:
+            async with asyncio.timeout(settings.cache_io_timeout_seconds):
+                client = await self.client()
+                raw = await client.get(key)
+            value = json.loads(raw) if raw else None
+        except (RedisError, OSError, ValueError, TypeError):
             return None
-        return json.loads(raw) if raw else None
+        return value if valid_cache_value(value) else None
 
     async def set(self, key: str, value: dict[str, Any]) -> None:
-        client = await self.client()
-        if client is None:
+        if not valid_cache_value(value):
             return
         try:
-            await client.setex(key, settings.cache_ttl_seconds, json.dumps(value))
-        except Exception:
+            encoded = json.dumps(value)
+            async with asyncio.timeout(settings.cache_io_timeout_seconds):
+                client = await self.client()
+                await client.setex(key, settings.cache_ttl_seconds, encoded)
+        except (RedisError, OSError, ValueError, TypeError):
             return
+
+    async def aclose(self) -> None:
+        client, self._client = self._client, None
+        if client is not None:
+            try:
+                async with asyncio.timeout(settings.cache_io_timeout_seconds):
+                    await client.aclose()
+            except (RedisError, OSError, ValueError, TypeError):
+                logger.warning("Redis cache shutdown failed")
 
 
 cache = ResponseCache()

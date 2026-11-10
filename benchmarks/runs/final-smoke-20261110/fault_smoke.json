@@ -1,0 +1,34 @@
+[
+  {
+    "elapsed_ms": 71.74728199970559,
+    "expected_http_status": 502,
+    "fault": "non-json",
+    "liveness_http_status": 200,
+    "observed_http_status": 502,
+    "passed": true
+  },
+  {
+    "elapsed_ms": 837.9491100022278,
+    "expected_http_status": 503,
+    "fault": "timeout",
+    "liveness_http_status": 200,
+    "observed_http_status": 503,
+    "passed": true
+  },
+  {
+    "elapsed_ms": 49.38496500108158,
+    "expected_http_status": 503,
+    "fault": "unhealthy",
+    "liveness_http_status": 200,
+    "observed_http_status": 503,
+    "passed": true
+  },
+  {
+    "cached": false,
+    "elapsed_ms": 28.234687000804115,
+    "expected_http_status": 200,
+    "fault": "Redis server stopped",
+    "observed_http_status": 200,
+    "passed": true
+  }
+]

@@ -1,0 +1,101 @@
+{
+  "all_final_e2e_ms": {
+    "max": 72.17171800220967,
+    "mean": 64.73117599496618,
+    "n": 200,
+    "p50": 64.09144700046454,
+    "p95": 68.18048784680286,
+    "p99": 69.78330709996952
+  },
+  "attempt_e2e_ms": {
+    "max": 72.1665090022725,
+    "mean": 64.7241382651373,
+    "n": 200,
+    "p50": 64.08208850007213,
+    "p95": 68.17478824868886,
+    "p99": 69.77718530233686
+  },
+  "attempts": 200,
+  "cache_hits": 0,
+  "config": {
+    "arrival_rate": null,
+    "cache_namespace": "cpu-reference-20261110",
+    "concurrency": 1,
+    "mode": "direct-json",
+    "model": "cpu-reference-fixture-v1",
+    "requests": 200,
+    "retries": 0,
+    "run_id": "r2-c1-direct-json",
+    "seed": 0,
+    "temperature": 0,
+    "timeout_seconds": 4,
+    "url": "http://127.0.0.1:34601/v1/chat/completions"
+  },
+  "elapsed_seconds": 12.948246440999355,
+  "error_rate": 0.0,
+  "failed_attempts": 0,
+  "failed_requests": 0,
+  "load_generator_event_loop_lag_ms": {
+    "max": 4.6432400013145525,
+    "mean": 0.47455818283279416,
+    "n": 1236,
+    "p50": 0.2221495014964603,
+    "p95": 1.5162220033744234,
+    "p99": 2.128489951792291
+  },
+  "load_generator_wait_ms": {
+    "max": 136.0795259970473,
+    "mean": 127.8571292349261,
+    "n": 200,
+    "p50": 127.75562299975718,
+    "p95": 134.35562895083422,
+    "p99": 135.6778408824539
+  },
+  "logical_requests": 200,
+  "max_configured_inflight": 1,
+  "notes": [
+    "Percentiles use linear interpolation; small samples do not establish stable tails.",
+    "Client E2E includes HTTP connection/pool/network/decode time; it does not isolate server queue or GPU time.",
+    "Load-generator wait and event-loop lag are separate from request E2E.",
+    "Successful-request E2E/TTFT include prior failed attempts when retries are explicitly enabled; raw e2e_ms is per attempt.",
+    "Warm-cache replay throughput is not model token-generation throughput.",
+    "JSON gateway/direct modes have no observable TTFT; absent token counts are not estimated.",
+    "Reference scores are workload smoke checks; repeated prompts are not independent quality evidence."
+  ],
+  "output_tokens_per_second": null,
+  "peak_inflight": 1,
+  "reference_acceptance_errors": [],
+  "reference_accuracy_including_failures": 1.0,
+  "reference_backend_counters": {
+    "active": 0,
+    "calls": 200,
+    "mode": "normal",
+    "peak_active": 1
+  },
+  "reference_correct_requests": 200,
+  "reference_requests": 200,
+  "retry_attempts": 0,
+  "schema_version": 1,
+  "success_e2e_ms": {
+    "max": 72.17171800220967,
+    "mean": 64.73117599496618,
+    "n": 200,
+    "p50": 64.09144700046454,
+    "p95": 68.18048784680286,
+    "p99": 69.78330709996952
+  },
+  "success_ttft_ms": {
+    "max": null,
+    "mean": null,
+    "n": 0,
+    "p50": null,
+    "p95": null,
+    "p99": null
+  },
+  "successful_requests": 200,
+  "successful_requests_per_second": 15.446107000768812,
+  "valid_run": true,
+  "validation_errors": [],
+  "workload_sha256": "0d44c7c5ce4307e9ad012ac5c513a769a0606981bf8878e070ee3abc1d7fda79",
+  "workload_unique_prompts": 200
+}

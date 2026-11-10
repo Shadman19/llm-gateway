@@ -1,0 +1,13 @@
+# Direct versions used for the November 2026 CPU reference run.
+fastapi==0.141.1
+starlette==1.6.0
+httpx==0.28.1
+pydantic==2.13.4
+uvicorn==0.52.1
+redis==8.1.0
+pytest==9.2.0
+pytest-cov==7.1.0
+ruff==0.17.4
+anyio==4.16.0
+redislite==6.2.912183
+matplotlib==3.10.8

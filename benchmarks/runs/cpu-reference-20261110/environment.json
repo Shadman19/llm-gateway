@@ -1,0 +1,69 @@
+{
+  "backend_implementation": "deterministic SHA-256 text sentinel; no tokenizer/model",
+  "backend_workers": 1,
+  "cgroup_limits": {
+    "cpu.max": "unavailable",
+    "memory.max": "unavailable"
+  },
+  "cpu_model": "AMD EPYC 7763 64-Core Processor",
+  "dependencies": {
+    "fastapi": "0.141.1",
+    "httpx": "0.28.1",
+    "redis": "8.1.0",
+    "redislite": "6.2.912183",
+    "uvicorn": "0.52.1"
+  },
+  "experiment_kind": "CPU HTTP fixture integration; not LLM or GPU performance",
+  "gateway_workers": 1,
+  "generation": {
+    "seed": 0,
+    "temperature": 0
+  },
+  "http_urls": {
+    "gateway": "http://127.0.0.1:33749",
+    "reference": "http://127.0.0.1:34601"
+  },
+  "limitations": [
+    "No GPU, no vLLM, no trained model, no model token throughput or TTFT.",
+    "Synthetic deterministic text is a protocol sentinel, not held-out model quality.",
+    "The four modes run separately; within each concurrency/replicate their order rotates.",
+    "Backend/service warm-up is separate from response-cache priming.",
+    "Short tests on a shared CPU host do not establish production SLOs."
+  ],
+  "load_generator_location": "same shared host as both uvicorn processes and Redis; loopback HTTP",
+  "logical_cpu_count": 9,
+  "metadata_correction": {
+    "correction": "Both installed synchronous and asynchronous redis-py Connection objects report protocol=3; this corrects a metadata literal only. Request records and measured source hashes are unchanged.",
+    "field": "redis_protocol",
+    "measured_source_snapshot": "source_snapshot/",
+    "original": "RESP2 via redis-py; loopback TCP; actual bundled Redis server",
+    "recorded_after_measurement": true
+  },
+  "model": "cpu-reference-fixture-v1",
+  "nominal_backend_delay_ms": 20.0,
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "realized_delay_note": "asyncio scheduling can exceed nominal delay; measured client latency is recorded",
+  "redis": {
+    "arch_bits": 64,
+    "multiplexing_api": "epoll",
+    "redis_mode": "standalone",
+    "redis_version": "6.2.14"
+  },
+  "redis_client_protocol_defaults": {
+    "asynchronous_gateway": 3,
+    "synchronous_control": 3
+  },
+  "redis_protocol": "RESP3 via redis-py defaults; loopback TCP; actual bundled Redis server",
+  "source_sha256": {
+    "app/__init__.py": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "app/backends.py": "4c920f91bb0b1425f72d27ba8e0b48092b4809a46a6586788e75841595477d45",
+    "app/cache.py": "4c689a7ce2199f1a34b67fa27d9e77323126b891f5e8b31ca5e9ebbed93e7bde",
+    "app/config.py": "f9ff3a36aaa1c289d7f40117b4a1dd0a40157c2529f0381610eacb7177e1af4c",
+    "app/main.py": "5ab428010b358648e9351944f6c5a1a4ebfb8bd10ea39db59d3593a2d1d18d86",
+    "benchmarks/fixtures/prompts.jsonl": "eff73d951f5513ea611f3c48081c9013c2e3f04096992a2a806f42795fcafda3",
+    "benchmarks/reference_stack.py": "2f563990688fb009c8b37ba3e972da091af01214e6537cf2d4bebf43712acc52",
+    "benchmarks/serving_benchmark.py": "434b2599269ab5d7dee296094cd5581c5f0974b9f1e0a4ce63df0c7ec239579f"
+  },
+  "upstream_source_commit": "69b66f63fc8d91afc3e6056b79c27b8a3de7942f"
+}

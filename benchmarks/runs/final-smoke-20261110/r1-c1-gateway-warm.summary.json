@@ -1,0 +1,103 @@
+{
+  "all_final_e2e_ms": {
+    "max": 48.04596300164121,
+    "mean": 45.99094900004275,
+    "n": 4,
+    "p50": 45.931221000500955,
+    "p95": 48.00931275131006,
+    "p99": 48.03863295157498
+  },
+  "attempt_e2e_ms": {
+    "max": 48.0399119987851,
+    "mean": 45.98489024829178,
+    "n": 4,
+    "p50": 45.92504899846972,
+    "p95": 48.00325259875535,
+    "p99": 48.03258011877915
+  },
+  "attempts": 4,
+  "cache_hits": 4,
+  "config": {
+    "arrival_rate": null,
+    "cache_namespace": "cpu-reference-20261110",
+    "concurrency": 1,
+    "mode": "gateway-warm",
+    "model": "cpu-reference-fixture-v1",
+    "requests": 4,
+    "retries": 0,
+    "run_id": "r1-c1-gateway-warm",
+    "seed": 0,
+    "temperature": 0,
+    "timeout_seconds": 4,
+    "url": "http://127.0.0.1:41695/v1/chat"
+  },
+  "elapsed_seconds": 0.18405218200132367,
+  "error_rate": 0.0,
+  "failed_attempts": 0,
+  "failed_requests": 0,
+  "load_generator_event_loop_lag_ms": {
+    "max": 1.7848720017354935,
+    "mean": 0.32676876627888035,
+    "n": 17,
+    "p50": 0.15983600314939395,
+    "p95": 1.1304280022159212,
+    "p99": 1.6539832018315792
+  },
+  "load_generator_wait_ms": {
+    "max": 91.66190399992047,
+    "mean": 57.23728799875971,
+    "n": 4,
+    "p50": 68.62955749784305,
+    "p95": 91.32653174965526,
+    "p99": 91.59482954986743
+  },
+  "logical_requests": 4,
+  "max_configured_inflight": 1,
+  "notes": [
+    "Percentiles use linear interpolation; small samples do not establish stable tails.",
+    "Client E2E includes HTTP connection/pool/network/decode time; it does not isolate server queue or GPU time.",
+    "Load-generator wait is measured once per logical request before its first attempt; it excludes previous attempts when retries are enabled.",
+    "Each attempt has an absolute deadline including stream consumption; explicit retries receive separate attempt budgets.",
+    "Load-generator wait and event-loop lag are separate from request E2E.",
+    "Successful-request E2E/TTFT include prior failed attempts when retries are explicitly enabled; raw e2e_ms is per attempt.",
+    "Warm-cache replay throughput is not model token-generation throughput.",
+    "JSON gateway/direct modes have no observable TTFT; absent token counts are not estimated.",
+    "Reference scores are workload smoke checks; repeated prompts are not independent quality evidence."
+  ],
+  "output_tokens_per_second": null,
+  "peak_inflight": 1,
+  "reference_acceptance_errors": [],
+  "reference_accuracy_including_failures": 1.0,
+  "reference_backend_counters": {
+    "active": 0,
+    "calls": 4,
+    "mode": "normal",
+    "peak_active": 1
+  },
+  "reference_correct_requests": 4,
+  "reference_requests": 4,
+  "retry_attempts": 0,
+  "schema_version": 1,
+  "success_e2e_ms": {
+    "max": 48.04596300164121,
+    "mean": 45.99094900004275,
+    "n": 4,
+    "p50": 45.931221000500955,
+    "p95": 48.00931275131006,
+    "p99": 48.03863295157498
+  },
+  "success_ttft_ms": {
+    "max": null,
+    "mean": null,
+    "n": 0,
+    "p50": null,
+    "p95": null,
+    "p99": null
+  },
+  "successful_requests": 4,
+  "successful_requests_per_second": 21.73296701242712,
+  "valid_run": true,
+  "validation_errors": [],
+  "workload_sha256": "2aaa49efa3b0e3b5f9cd5cac51ec0a2c964f83b6c4fb03068e145484da110007",
+  "workload_unique_prompts": 4
+}

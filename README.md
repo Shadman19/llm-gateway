@@ -1,104 +1,101 @@
 # LLM Serving Gateway
 
-![CI](https://github.com/Shadman19/llm-gateway/actions/workflows/ci.yml/badge.svg)
+A Python research prototype for routing requests to an OpenAI-compatible model
+server or hosted API, with Redis response caching and bounded dependency I/O.
+The repository pairs serving code with a matched-workload benchmark and
+controlled failure checks.
 
-A benchmarked LLM serving gateway that routes requests to either a self-hosted
-open-weights model (Qwen2.5-1.5B-Instruct via vLLM) or a hosted API, with Redis
-response caching, request validation, health checks, and failure handling.
-Backend selection is a configuration change, not a code change.
+The CPU reference experiment measures gateway/cache behavior against an HTTP
+fixture. Real LLM inference, GPU throughput, model TTFT and quantization quality
+remain unmeasured. See [results](benchmarks/RESULTS.md), the
+[measurement protocol](benchmarks/PROTOCOL.md) and [raw runs](benchmarks/runs/).
 
-Production-oriented and benchmarked. Not production-grade: it has never carried
-real user traffic and has no uptime, security review, or operational ownership
-behind it.
+![CPU reference measurements](benchmarks/evidence/cpu-reference-20261110.png)
 
-## Measured results
+The [interview practice notes](docs/INTERVIEW_NOTES.md) connect the implementation
+to its evidence and give exercises for explaining the tradeoffs.
 
-Full methodology and hardware in [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md).
+## Reproduce the checks
 
-| Metric | Value |
-| --- | --- |
-| Median TTFT | TBD ms |
-| Output token throughput | TBD tok/s |
-| Gateway P95, cold cache, 50 users | TBD ms |
-| Gateway P95, warm cache, 50 users | TBD ms |
-| Cache latency reduction | TBD % |
-| Error rate at peak concurrency | TBD % |
-| Hardware | TBD |
-
-## Quick start
+Python 3.12; the CPU reference stack was validated on Linux. The pinned benchmark
+requirements include an embedded Redis executable for an isolated local run.
 
 ```bash
-# 1. Serve the model (GPU host)
-vllm serve Qwen/Qwen2.5-1.5B-Instruct --host 0.0.0.0 --port 8001
-
-# 2. Start gateway and Redis
-docker compose up --build
-
-# 3. Call it
-curl -s localhost:8000/v1/chat -H 'content-type: application/json' \
-  -d '{"messages":[{"role":"user","content":"Explain KV caching briefly."}],"max_tokens":128}'
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-benchmark.txt
+python -m pytest
 ```
 
-Response:
+See [START_HERE.md](START_HERE.md) for the reference-stack command and a real
+model connection. No hosted API key or GPU is needed for the reference checks.
+
+## Serving interface
 
 ```json
 {
-  "content": "...",
-  "backend": "selfhosted",
-  "model": "Qwen/Qwen2.5-1.5B-Instruct",
-  "cached": false,
-  "latency_ms": 0.0,
-  "app_version": "0.1.0"
+  "messages": [{"role": "user", "content": "Explain KV caching briefly."}],
+  "max_tokens": 128,
+  "temperature": 0,
+  "seed": 0,
+  "use_cache": true
 }
 ```
 
-Switch to a hosted backend with no code change:
+Send this body to `POST /v1/chat`. The response contains `content`, `backend`,
+`model`, `cached`, `latency_ms` and `app_version`. This endpoint returns complete
+JSON. It does not stream, so its server-side elapsed time is not TTFT.
 
-```bash
-LLM_BACKEND=hosted HOSTED_API_KEY=sk-... docker compose up
-```
+`GET /health` checks process liveness. `GET /ready` returns 200 only if the
+configured model is advertised by the authenticated backend models endpoint;
+otherwise it returns 503. Readiness checks are excluded from load measurements.
 
-## Architecture
+## Cache and failures
 
-```
-client -> FastAPI gateway -> Redis cache (hit -> return)
-                          -> backend selector (config)
-                               -> vLLM OpenAI-compatible server (self-hosted)
-                               -> hosted provider API
-```
+Cache keys include backend name/endpoint, model, declared revision/dtype,
+messages, generation controls and an optional `X-Cache-Namespace` header.
+Revision/dtype values come from operator configuration. A deployment must change
+these labels or namespace when changing the underlying weights/configuration.
+The namespace supports isolated benchmark runs; it does not authenticate tenants
+or authorize access.
 
-## Tests
+Corrupt cache values become misses. Redis reads and writes each have a bounded
+I/O budget and fail open. Upstream transport/timeouts return 503; malformed JSON
+or invalid completion content returns 502 before anything is cached. Persistent
+HTTP connections are reused and closed during application shutdown.
 
-```bash
-pip install -r requirements-dev.txt
-pytest
-```
+## Configuration
 
-Coverage spans routing, config-driven backend selection, cache hit and miss,
-cache bypass, cache key stability, request validation, backend failure (503),
-malformed backend responses (502), and backend timeout handling.
+| Variable | Default / purpose |
+| --- | --- |
+| `LLM_BACKEND` | `selfhosted` or `hosted` |
+| `VLLM_URL` | `http://localhost:8001/v1` outside Docker |
+| `VLLM_MODEL` | `Qwen/Qwen2.5-1.5B-Instruct` |
+| `HOSTED_URL`, `HOSTED_MODEL` | Hosted OpenAI-compatible endpoint/model |
+| `HOSTED_API_KEY` | Hosted credential, supplied outside source control |
+| `REDIS_URL` | `redis://localhost:6379/0` |
+| `CACHE_TTL` | 3600 seconds |
+| `CACHE_TIMEOUT` | 0.25 seconds per Redis operation |
+| `REQUEST_TIMEOUT` | 60 seconds for a backend request |
+| `READINESS_TIMEOUT` | 5 seconds |
+| `MODEL_REVISION`, `INFERENCE_DTYPE` | `unspecified`; operator cache labels |
 
-CI mocks the backend so it runs without a GPU. The real GPU smoke test is run
-manually and recorded in `benchmarks/RESULTS.md`.
+Docker Compose now forwards the selected backend and hosted/self-hosted settings
+from the environment. Its gateway port is bound to loopback and Redis has no
+published host port. A Docker gateway needs a model endpoint reachable from the
+container; use a private endpoint or tunnel appropriate to that environment.
 
-## Design decisions
+## Measurements and limitations
 
-- **OpenAI-compatible interface for both backends.** vLLM exposes this natively,
-  so one client path serves both and swapping is configuration only.
-- **Cache degrades to a no-op.** If Redis is unreachable the gateway serves
-  uncached rather than failing, so a cache outage is not an availability outage.
-- **Warm and cold cache measured separately.** Blending them into a single mean
-  latency would make the cache look like a model speedup, which it is not.
-- **503 rather than a hang on backend failure.** Timeouts are bounded and surfaced.
+The runner keeps direct JSON, gateway bypass, cold response cache and verified
+warm response cache separate. It preserves prompts and generation controls,
+records failures/retries/queue delay, and writes raw JSONL plus summary JSON.
+Warm replay must match the primed answer; unexpected cache behavior invalidates
+that run. A separate direct-stream mode can measure SSE TTFT on an actual server.
 
-## Limitations
+This prototype has no authentication, rate limiting, per-tenant authorization,
+production traffic or uptime history. Cache TTL/isolation checks and local fault
+checks do not establish production security or availability. No multi-node,
+streaming gateway, real-model compression or GPU acceleration result is claimed.
+Public or production deployment requires additional engineering and review.
 
-- Single GPU, single gateway replica. No multi-node results.
-- No authentication or rate limiting; both would be required before real exposure.
-- No streaming responses yet.
-- Benchmarks are short-duration and synthetic.
-
-## Background
-
-Built to extend earlier work on LLM serving infrastructure with real self-hosted
-inference and reproducible performance measurement.
