@@ -71,7 +71,10 @@ quality evaluation and a task-appropriate noninferiority criterion.
 - Use the [OpenTelemetry Python example](https://opentelemetry.io/docs/languages/python/getting-started/)
   for a later tracing exercise: distinguish gateway, cache and backend spans,
   without putting prompt text or credentials in telemetry.
-- Add a separately held-out quality regression suite before advertising any
+- The [paired binary-quality utility](QUALITY_GATE.md) now validates externally
+  supplied score pairs, preserves input hashes, and reports conservative uncertainty.
+  Its tests are synthetic; actual held-out model quality remains unmeasured.
+- Collect a separately held-out quality regression suite before advertising any
   precision, quantization or caching policy as preserving model quality.
 
 These are study tasks and proposed extensions, not completed credentials or
