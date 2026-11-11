@@ -91,3 +91,52 @@ privacy, semantic answer equivalence, latency or production readiness. A later
 quality-speed experiment must retain real responses, pinned model/config and
 grader provenance, failure accounting and separately measured serving results.
 Do not merge this output with the CPU-fixture matrix as model performance.
+
+## Plan sample size and comparison budgets
+
+For **zero observed paired difference**, this interval clears margin `m` when
+`n >= ceil(2*log(2/alpha)/m**2)`. These are illustrative thresholds for this
+specific interval and observed difference, **not a statistical power analysis**,
+a minimum dataset size for every method, or a promise that a future run passes.
+
+| Absolute margin | One comparison, alpha 0.05 | 20 predeclared comparisons, alpha 0.0025 each |
+| --- | ---: | ---: |
+| 1 percentage point | 73,778 | 133,693 |
+| 2 percentage points | 18,445 | 33,424 |
+| 5 percentage points | 2,952 | 5,348 |
+| 10 percentage points | 738 | 1,337 |
+
+Reproduce each threshold with Python's standard library:
+
+```python
+import math
+
+for comparisons in (1, 20):
+    alpha = 0.05 / comparisons
+    for margin in (0.01, 0.02, 0.05, 0.10):
+        n = math.ceil(2 * math.log(2 / alpha) / margin**2)
+        assert math.sqrt(2 * math.log(2 / alpha) / n) <= margin
+        assert math.sqrt(2 * math.log(2 / alpha) / (n - 1)) > margin
+        print(comparisons, margin, n)
+```
+
+For a **fixed, predeclared family** of 20 comparisons, allocating 0.05/20 to
+each interval gives at least 95% simultaneous coverage by the union bound,
+provided every individual interval meets its assumptions. Independence between
+comparisons is not required for that union bound; independent sampling units
+within each comparison are still required. The tool does not coordinate a
+family: preserve the complete family and alpha allocation outside it, decide
+in advance what each interval means, and retain every result. One passing
+comparison is not approval of all candidates. This does not fix repeated
+peeking, adaptive family selection, invalid graders or dependent prompts.
+
+A distinct item ID does not establish a distinct sampling unit. For example,
+40 independently sampled tasks copied 100 times remain 40 independent tasks,
+not 4,000. Simply collapsing duplicates is valid only when the independent
+unit and equal-weight estimand really are the original tasks; other clustered
+designs need their own analysis.
+
+The eight thresholds were checked against `evaluate` at `n-1` and `n` using
+artificial identical all-correct labels (16 boundary checks). Every result
+retained `synthetic_fixture_only`. This validates the calculation and utility
+boundary behavior, not coverage on a real workload or model noninferiority.
