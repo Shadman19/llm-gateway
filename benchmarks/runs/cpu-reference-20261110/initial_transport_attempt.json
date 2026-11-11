@@ -1,0 +1,17 @@
+{
+  "allowed_fallback": "normal loopback AF_INET TCP binding succeeded; actual bundled Redis subsequently run using TCP",
+  "date": "2026-11-10",
+  "initial_transport": "private Unix socket via redislite.Redis",
+  "no_escalation_used": true,
+  "observed_error": "Opening Unix socket: creating socket: Operation not permitted",
+  "outcome": "blocked; no measurement results",
+  "quick_validation": {
+    "elapsed_seconds": 9.703612491997774,
+    "failed_requests": 0,
+    "fault_checks_passed": true,
+    "kind": "CPU reference fixture integration, not model/GPU performance",
+    "matrix_runs": 8,
+    "measured_requests": 32,
+    "source_unchanged_during_run": true
+  }
+}

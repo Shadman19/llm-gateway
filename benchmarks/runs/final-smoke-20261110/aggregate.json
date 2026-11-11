@@ -1,0 +1,98 @@
+[
+  {
+    "cache_hits": 0,
+    "concurrency": 1,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 1.414877002389403,
+    "median_of_run_p50_ms": 63.3217294998758,
+    "median_of_run_p95_ms": 67.40366189897031,
+    "median_run_success_req_s": 18.3317851833352,
+    "mode": "direct-json",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 0,
+    "concurrency": 4,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 0.3485000015643891,
+    "median_of_run_p50_ms": 28.33656450093258,
+    "median_of_run_p95_ms": 30.135490251268493,
+    "median_run_success_req_s": 130.92070047547085,
+    "mode": "direct-json",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 0,
+    "concurrency": 1,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 0.7590079985675402,
+    "median_of_run_p50_ms": 67.91152300138492,
+    "median_of_run_p95_ms": 102.03909654919697,
+    "median_run_success_req_s": 14.69804354057528,
+    "mode": "gateway-bypass",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 0,
+    "concurrency": 4,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 0.9405710006831214,
+    "median_of_run_p50_ms": 42.34095949868788,
+    "median_of_run_p95_ms": 45.86034404928796,
+    "median_run_success_req_s": 86.08487680646134,
+    "mode": "gateway-bypass",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 0,
+    "concurrency": 1,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 1.6818850017443765,
+    "median_of_run_p50_ms": 67.94407149936887,
+    "median_of_run_p95_ms": 105.55116229934355,
+    "median_run_success_req_s": 14.140193714211573,
+    "mode": "gateway-cold",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 0,
+    "concurrency": 4,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 1.161161002528388,
+    "median_of_run_p50_ms": 40.19703449921508,
+    "median_of_run_p95_ms": 43.06596130008984,
+    "median_run_success_req_s": 91.25728723665077,
+    "mode": "gateway-cold",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 4,
+    "concurrency": 1,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 1.7848720017354935,
+    "median_of_run_p50_ms": 45.931221000500955,
+    "median_of_run_p95_ms": 48.00931275131006,
+    "median_run_success_req_s": 21.73296701242712,
+    "mode": "gateway-warm",
+    "replicates": 1,
+    "successful_requests": 4
+  },
+  {
+    "cache_hits": 4,
+    "concurrency": 4,
+    "failed_requests": 0,
+    "max_event_loop_lag_ms": 0.44365800204104744,
+    "median_of_run_p50_ms": 11.002889999872423,
+    "median_of_run_p95_ms": 42.17554034985368,
+    "median_run_success_req_s": 83.83487372155675,
+    "mode": "gateway-warm",
+    "replicates": 1,
+    "successful_requests": 4
+  }
+]

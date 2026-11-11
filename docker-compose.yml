@@ -1,7 +1,6 @@
 services:
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -9,12 +8,21 @@ services:
 
   gateway:
     build: .
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
     environment:
-      LLM_BACKEND: selfhosted
-      VLLM_URL: http://host.docker.internal:8001/v1
-      VLLM_MODEL: Qwen/Qwen2.5-1.5B-Instruct
+      LLM_BACKEND: ${LLM_BACKEND:-selfhosted}
+      VLLM_URL: ${VLLM_URL:-http://host.docker.internal:8001/v1}
+      VLLM_MODEL: ${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}
+      HOSTED_URL: ${HOSTED_URL:-https://api.openai.com/v1}
+      HOSTED_MODEL: ${HOSTED_MODEL:-gpt-4o-mini}
+      HOSTED_API_KEY: ${HOSTED_API_KEY:-}
+      MODEL_REVISION: ${MODEL_REVISION:-unspecified}
+      INFERENCE_DTYPE: ${INFERENCE_DTYPE:-unspecified}
+      CACHE_TIMEOUT: ${CACHE_TIMEOUT:-0.25}
+      REQUEST_TIMEOUT: ${REQUEST_TIMEOUT:-60}
+      READINESS_TIMEOUT: ${READINESS_TIMEOUT:-5}
       REDIS_URL: redis://redis:6379/0
     extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on:
       redis: {condition: service_healthy}
+

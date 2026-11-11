@@ -14,11 +14,12 @@ class FakeBackend:
     def __init__(self, name="selfhosted", model="Qwen/Qwen2.5-1.5B-Instruct"):
         self.name = name
         self.model = model
+        self.base_url = "http://fake/v1"
         self.calls = 0
         self.raise_error: Exception | None = None
         self.response_text = "fake response"
 
-    async def chat(self, messages, max_tokens):
+    async def chat(self, messages, max_tokens, temperature=0.0, seed=None):
         self.calls += 1
         if self.raise_error:
             raise self.raise_error
@@ -26,6 +27,9 @@ class FakeBackend:
 
     async def healthy(self):
         return True
+
+    async def aclose(self):
+        pass
 
 
 class MemoryCache:
@@ -37,6 +41,9 @@ class MemoryCache:
 
     async def set(self, key, value):
         self.store[key] = value
+
+    async def aclose(self):
+        pass
 
 
 @pytest.fixture
@@ -55,4 +62,5 @@ def memory_cache(monkeypatch):
 
 @pytest.fixture
 def client(fake_backend, memory_cache):
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client

@@ -1,0 +1,9 @@
+{
+  "elapsed_seconds": 10.658054087998607,
+  "failed_requests": 0,
+  "fault_checks_passed": true,
+  "kind": "CPU reference fixture integration, not model/GPU performance",
+  "matrix_runs": 8,
+  "measured_requests": 32,
+  "source_unchanged_during_run": true
+}

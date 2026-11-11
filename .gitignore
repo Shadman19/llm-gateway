@@ -5,3 +5,6 @@ __pycache__/
 coverage.xml
 benchmarks/run_*.csv
 .venv/
+.venv-repro/
+.ruff_cache/
+
