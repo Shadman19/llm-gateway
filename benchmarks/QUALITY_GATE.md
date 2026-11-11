@@ -140,3 +140,33 @@ The eight thresholds were checked against `evaluate` at `n-1` and `n` using
 artificial identical all-correct labels (16 boundary checks). Every result
 retained `synthetic_fixture_only`. This validates the calculation and utility
 boundary behavior, not coverage on a real workload or model noninferiority.
+
+## Review failed generations and important slices
+
+Freeze the attempted-task denominator, failure policy and slices before
+scoring. A missing response must remain in the workload under the declared
+grading rule; intersecting successful IDs can manufacture a quality gain.
+Failure-as-incorrect can be appropriate for a particular task-success metric,
+but is not a universal utility model for abstention or safety.
+
+Aggregate noninferiority does not establish subgroup noninferiority. For
+example, suppose a synthetic comparison has 9,000 A items improving by ten
+percentage points and 1,000 B items degrading by thirty points. The overall
+difference is positive six points while B regresses sharply. With fixed
+within-group differences, changing B's proportion to `w` changes the aggregate
+difference to `0.10 - 0.40*w`: zero at 25% and minus five points at 37.5%.
+These are invented arithmetic examples, not model results or distribution-shift
+guarantees; real shifts can change within-group behavior too.
+
+Predeclare a justified comparison family that includes important slices,
+allocate alpha across it, retain every result and ensure each slice has enough
+independent units for its intended decision. An inconclusive slice is not
+evidence of safety. The utility does not accept group metadata or automatically
+coordinate these comparisons. A family-wise adjustment cannot fix invalid
+labels, unrepresentative sampling or dependent examples.
+
+Strict JSON validation is a separate layer from scientific validity. Rejecting
+duplicate fields/IDs, malformed records and coerced labels protects the score
+interface; it cannot establish that a supplied `correct` label is actually
+correct. Independently audit the grader, preserve adjudication and rubric
+versions, and report disagreement without silently changing the frozen plan.
