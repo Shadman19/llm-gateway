@@ -2,18 +2,22 @@
 
 ![CI](https://github.com/Shadman19/llm-gateway/actions/workflows/ci.yml/badge.svg)
 
-A benchmarked LLM serving gateway that routes requests to either a self-hosted
+An LLM serving gateway prototype with interfaces for either a self-hosted
 open-weights model (Qwen2.5-1.5B-Instruct via vLLM) or a hosted API, with Redis
 response caching, request validation, health checks, and failure handling.
 Backend selection is a configuration change, not a code change.
 
-Production-oriented and benchmarked. Not production-grade: it has never carried
-real user traffic and has no uptime, security review, or operational ownership
-behind it.
+This is a research/engineering prototype. Real-model vLLM/GPU benchmarks and
+model-quality evaluation remain unrun. It has never carried real user traffic
+and has no production uptime or operational ownership record.
 
-## Measured results
+## Benchmark plan and current scope
 
-Full methodology and hardware in [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md).
+[`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) is an unfilled benchmark plan,
+not a record of completed real-model measurements. The TBD entries below have
+not been measured. CPU HTTP fixture experiments must be reported separately:
+they exercise software behavior and do not measure LLM throughput, TTFT or
+model quality. Warm response-cache replay is not faster model inference.
 
 | Metric | Value |
 | --- | --- |
@@ -78,8 +82,8 @@ Coverage spans routing, config-driven backend selection, cache hit and miss,
 cache bypass, cache key stability, request validation, backend failure (503),
 malformed backend responses (502), and backend timeout handling.
 
-CI mocks the backend so it runs without a GPU. The real GPU smoke test is run
-manually and recorded in `benchmarks/RESULTS.md`.
+CI mocks the backend so it runs without a GPU. A real-model GPU smoke test has
+not been recorded in `benchmarks/RESULTS.md`.
 
 ## Design decisions
 
@@ -87,18 +91,18 @@ manually and recorded in `benchmarks/RESULTS.md`.
   so one client path serves both and swapping is configuration only.
 - **Cache degrades to a no-op.** If Redis is unreachable the gateway serves
   uncached rather than failing, so a cache outage is not an availability outage.
-- **Warm and cold cache measured separately.** Blending them into a single mean
-  latency would make the cache look like a model speedup, which it is not.
+- **Separate warm and cold cache measurement in the benchmark plan.** Blending
+  these paths would make response replay look like a model speedup.
 - **503 rather than a hang on backend failure.** Timeouts are bounded and surfaced.
 
 ## Limitations
 
-- Single GPU, single gateway replica. No multi-node results.
+- Intended local setup: one model server and one gateway replica. No real-model GPU or multi-node measurements are established.
 - No authentication or rate limiting; both would be required before real exposure.
 - No streaming responses yet.
-- Benchmarks are short-duration and synthetic.
+- CPU fixture experiments are synthetic; they do not establish real-model serving performance.
 
 ## Background
 
-Built to extend earlier work on LLM serving infrastructure with real self-hosted
-inference and reproducible performance measurement.
+Built to explore LLM serving interfaces, failure handling and reproducible
+performance measurement. The self-hosted real-model benchmark remains planned.
